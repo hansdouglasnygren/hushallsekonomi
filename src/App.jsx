@@ -141,37 +141,37 @@ function monthTotal(allItems,m) {
   },0);
 }
 
-// ── Styles as object (no <style> tag needed in artifacts) ──────────────────
+// ── Styles ────────────────────────────────────────────────────────────────────
 const S = {
-  app:{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 16px",background:C.bg,color:C.tx,fontFamily:"'DM Sans', system-ui, sans-serif"},
-  card:{background:C.sf,border:`1px solid ${C.br}`,borderRadius:20,padding:"32px 28px",width:"100%",maxWidth:560,position:"relative",overflow:"hidden"},
+  app:{minHeight:"100vh",minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"16px 12px",background:C.bg,color:C.tx,fontFamily:"system-ui,-apple-system,sans-serif"},
+  card:{background:C.sf,border:`1px solid ${C.br}`,borderRadius:20,padding:"24px 20px",width:"100%",maxWidth:"100%",position:"relative",overflow:"hidden"},
   bar:{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#6c63ff,#8b85ff,#4ecca3)"},
-  prog:{display:"flex",gap:4,marginBottom:28},
+  prog:{display:"flex",gap:4,marginBottom:24},
   dot:(done,active)=>({height:3,flex:1,borderRadius:2,background:done?"#6c63ff":active?"#8b85ff":C.br,transition:"background 0.3s"}),
-  slabel:{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:"uppercase",color:C.ac,marginBottom:8},
-  h1:{fontSize:22,lineHeight:1.25,color:C.tx,marginBottom:8,fontWeight:600},
-  sub:{fontSize:13,color:C.mu,marginBottom:20,lineHeight:1.5},
-  nav:{display:"flex",gap:10,marginTop:12,alignItems:"center"},
-  btnP:{flex:1,background:C.ac,border:"none",borderRadius:10,padding:"12px 18px",color:"white",fontSize:14,fontWeight:600,cursor:"pointer"},
-  btnB:{background:"transparent",border:`1px solid ${C.br}`,borderRadius:10,padding:"12px 18px",color:C.mu,fontSize:13,cursor:"pointer"},
-  btnSk:{background:"transparent",border:`1px dashed ${C.br}`,borderRadius:10,padding:"12px 16px",color:C.mu,fontSize:13,cursor:"pointer"},
-  optBtn:(sel)=>({background:sel?C.ad:C.cd,border:`1px solid ${sel?C.ac:C.br}`,borderRadius:12,padding:"12px 14px",color:sel?C.al:C.tx,fontSize:14,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,marginBottom:8,width:"100%"}),
-  countRow:{display:"flex",alignItems:"center",gap:14,background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:"11px 14px",marginBottom:8},
-  countBtn:{width:34,height:34,borderRadius:8,border:`1px solid ${C.br}`,background:C.sf,color:C.tx,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"},
-  inp:{width:"100%",background:C.cd,border:`1px solid ${C.br}`,borderRadius:10,padding:"11px 13px",color:C.tx,fontFamily:"inherit",fontSize:13,outline:"none",marginBottom:8,boxSizing:"border-box"},
+  slabel:{fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:C.ac,marginBottom:6},
+  h1:{fontSize:20,lineHeight:1.3,color:C.tx,marginBottom:6,fontWeight:700},
+  sub:{fontSize:13,color:C.mu,marginBottom:18,lineHeight:1.5},
+  nav:{display:"flex",gap:8,marginTop:16,alignItems:"center"},
+  btnP:{flex:1,background:C.ac,border:"none",borderRadius:12,padding:"14px 18px",color:"white",fontSize:15,fontWeight:700,cursor:"pointer"},
+  btnB:{background:"transparent",border:`1px solid ${C.br}`,borderRadius:12,padding:"14px 16px",color:C.mu,fontSize:13,cursor:"pointer"},
+  btnSk:{background:"transparent",border:`1px dashed ${C.br}`,borderRadius:12,padding:"14px 14px",color:C.mu,fontSize:13,cursor:"pointer"},
+  optBtn:(sel)=>({background:sel?C.ad:C.cd,border:`1px solid ${sel?C.ac:C.br}`,borderRadius:14,padding:"14px 16px",color:sel?C.al:C.tx,fontSize:15,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12,marginBottom:8,width:"100%"}),
+  countRow:{display:"flex",alignItems:"center",gap:14,background:C.cd,border:`1px solid ${C.br}`,borderRadius:14,padding:"14px 16px",marginBottom:8},
+  countBtn:{width:40,height:40,borderRadius:10,border:`1px solid ${C.br}`,background:C.sf,color:C.tx,fontSize:22,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"},
+  inp:{width:"100%",background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:"13px 14px",color:C.tx,fontFamily:"inherit",fontSize:14,outline:"none",marginBottom:8,boxSizing:"border-box"},
   inpRow:{display:"flex",gap:8,marginBottom:8},
-  pfx:{background:C.cd,border:`1px solid ${C.br}`,borderRadius:10,padding:"11px 13px",color:C.mu,fontSize:12,whiteSpace:"nowrap",display:"flex",alignItems:"center"},
-  lcard:{background:C.cd,border:`1px solid ${C.br}`,borderRadius:14,padding:18,marginBottom:12},
+  pfx:{background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:"13px 14px",color:C.mu,fontSize:12,whiteSpace:"nowrap",display:"flex",alignItems:"center"},
+  lcard:{background:C.cd,border:`1px solid ${C.br}`,borderRadius:16,padding:16,marginBottom:12},
   lcardT:{fontSize:11,letterSpacing:1.5,textTransform:"uppercase",color:C.mu,marginBottom:14},
-  calcBox:{background:C.ad,border:`1px solid ${C.ac}`,borderRadius:10,padding:"12px 14px",margin:"10px 0"},
-  pill:(lvl)=>({display:"inline-flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:6,fontSize:11,fontWeight:600,marginBottom:8,
+  calcBox:{background:C.ad,border:`1px solid ${C.ac}`,borderRadius:12,padding:"14px 16px",margin:"10px 0"},
+  pill:(lvl)=>({display:"inline-flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:8,fontSize:11,fontWeight:600,marginBottom:8,
     background:lvl==="none"?"#8884aa22":lvl==="mid"?"#f5a62322":"#ff6b6b22",
     border:`1px solid ${lvl==="none"?C.mu:lvl==="mid"?C.wa:C.er}`,
     color:lvl==="none"?C.mu:lvl==="mid"?C.wa:C.er}),
-  tag:(sel)=>({background:sel?C.ad:C.cd,border:`1px solid ${sel?C.ac:C.br}`,borderRadius:8,padding:"6px 11px",fontSize:12,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:5,margin:"0 5px 6px 0"}),
-  vbox:{background:"#f5a62311",border:`1px solid ${C.wa}`,borderRadius:10,padding:"12px 14px",marginTop:12},
-  totalCard:{display:"flex",justifyContent:"space-between",alignItems:"center",background:C.ad,border:`1px solid ${C.ac}`,borderRadius:12,padding:"14px 16px",marginBottom:20},
-  catCard:{background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:"12px 14px",marginBottom:8},
+  tag:(sel)=>({background:sel?C.ad:C.cd,border:`1px solid ${sel?C.ac:C.br}`,borderRadius:10,padding:"7px 12px",fontSize:13,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:5,margin:"0 5px 6px 0"}),
+  vbox:{background:"#f5a62311",border:`1px solid ${C.wa}`,borderRadius:12,padding:"14px 16px",marginTop:12},
+  totalCard:{display:"flex",justifyContent:"space-between",alignItems:"center",background:C.ad,border:`1px solid ${C.ac}`,borderRadius:14,padding:"16px 18px",marginBottom:20},
+  catCard:{background:C.cd,border:`1px solid ${C.br}`,borderRadius:14,padding:"14px 16px",marginBottom:8},
   // flex money
   fmWrap:{background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:"11px 13px",marginBottom:8},
   fmTop:{display:"flex",alignItems:"center",gap:8},
@@ -1197,29 +1197,47 @@ function Dashboard({data,onEdit,purchases,setPurchases}) {
   Object.entries(le).forEach(([k,e])=>{ if(e?.value) budgets[k]=toMonthly(e); });
 
   return (
-    <div style={{width:"100%",maxWidth:600,margin:"0 auto",padding:"16px 16px 48px",background:C.bg,minHeight:"100vh"}}>
-      <div style={{textAlign:"center",marginBottom:18,paddingTop:20}}>
+    <div style={{width:"100%",maxWidth:"100%",margin:"0 auto",padding:"0 0 80px",background:C.bg,minHeight:"100vh",minHeight:"100dvh"}}>
+      {/* Header */}
+      <div style={{background:"linear-gradient(180deg,#18181f 0%,#0f0f13 100%)",padding:"52px 20px 20px",borderBottom:`1px solid ${C.br}`,marginBottom:0}}>
         <div style={{fontSize:10,letterSpacing:2,color:C.ac,textTransform:"uppercase",marginBottom:6}}>Hushållsekonomi</div>
-        <h1 style={{fontSize:26,fontWeight:600,marginBottom:3}}>{data.name||"Ert hushåll"}</h1>
-        <div style={{color:C.mu,fontSize:12}}>{data.adults??2} vuxna · {data.children??0} barn</div>
-      </div>
-
-      {villkor.slice(0,2).map((v,i)=>(
-        <div key={i} style={{marginBottom:8,padding:"9px 13px",borderRadius:10,fontSize:12,display:"flex",justifyContent:"space-between",alignItems:"center",
-          ...(v.days<=30?{background:"#ff6b6b18",border:`1px solid ${C.er}`,color:C.er}
-            :v.days<=90?{background:"#f5a62318",border:`1px solid ${C.wa}`,color:C.wa}
-            :{background:C.cd,border:`1px solid ${C.br}`,color:C.mu})}}>
-          <span>{v.days<=30?"🚨":v.days<=90?"⏳":"📅"} <strong>{v.label}</strong> — {fmtDate(v.datum)}{v.nyRanta?` · ${v.nyRanta}%`:""}</span>
-          <span style={{fontWeight:700,marginLeft:10}}>{v.days}d</span>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+          <div>
+            <h1 style={{fontSize:28,fontWeight:800,marginBottom:2,letterSpacing:-0.5}}>{data.name||"Ert hushåll"}</h1>
+            <div style={{color:C.mu,fontSize:13}}>{data.adults??2} vuxna · {data.children??0} barn</div>
+          </div>
+          <button onClick={onEdit} style={{background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:"10px 14px",color:C.mu,cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>
+            ✏️ Ändra
+          </button>
         </div>
-      ))}
-
-      <div style={S.tabBar}>
-        <button style={S.tab(tab==="overview")} onClick={()=>setTab("overview")}>Översikt</button>
-        <button style={S.tab(tab==="chart")} onClick={()=>setTab("chart")}>Diagram</button>
-        <button style={S.tab(tab==="calendar")} onClick={()=>setTab("calendar")}>Månadsplan</button>
-        <button style={S.tab(tab==="log")} onClick={()=>setTab("log")}>Köplog</button>
       </div>
+
+      {/* Villkor alerts */}
+      {villkor.slice(0,2).length>0&&(
+        <div style={{padding:"12px 16px 0"}}>
+          {villkor.slice(0,2).map((v,i)=>(
+            <div key={i} style={{marginBottom:8,padding:"10px 14px",borderRadius:12,fontSize:12,display:"flex",justifyContent:"space-between",alignItems:"center",
+              ...(v.days<=30?{background:"#ff6b6b18",border:`1px solid ${C.er}`,color:C.er}
+                :v.days<=90?{background:"#f5a62318",border:`1px solid ${C.wa}`,color:C.wa}
+                :{background:C.cd,border:`1px solid ${C.br}`,color:C.mu})}}>
+              <span>{v.days<=30?"🚨":v.days<=90?"⏳":"📅"} <strong>{v.label}</strong> — {fmtDate(v.datum)}{v.nyRanta?` · ${v.nyRanta}%`:""}</span>
+              <span style={{fontWeight:700,marginLeft:10}}>{v.days}d</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tab bar — sticky */}
+      <div style={{position:"sticky",top:0,zIndex:10,background:C.bg,padding:"12px 16px 8px",borderBottom:`1px solid ${C.br}`}}>
+        <div style={{display:"flex",gap:4,background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:4}}>
+          {[["overview","Översikt"],["chart","Diagram"],["calendar","Månadsplan"],["log","Köplog"]].map(([id,lbl])=>(
+            <button key={id} style={{flex:1,padding:"9px 4px",border:"none",borderRadius:9,fontFamily:"inherit",fontSize:12,fontWeight:tab===id?700:400,cursor:"pointer",background:tab===id?C.ac:"transparent",color:tab===id?"white":C.mu,transition:"all 0.15s"}} onClick={()=>setTab(id)}>{lbl}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{padding:"16px 16px 0"}}>
 
       {tab==="overview"&&(
         <OverviewTab t={t} purchases={purchases} budgets={budgets} onGoLog={()=>setTab("log")} />
@@ -1228,14 +1246,10 @@ function Dashboard({data,onEdit,purchases,setPurchases}) {
       {tab==="calendar"&&<MonthlyCalendar t={t} />}
       {tab==="log"&&<PurchaseLog purchases={purchases} setPurchases={setPurchases} budgets={budgets} />}
 
-      <div style={{background:C.ad,border:`1px dashed ${C.ac}`,borderRadius:12,padding:"13px 16px",marginTop:12,marginBottom:18,textAlign:"center"}}>
+      <div style={{background:C.ad,border:`1px dashed ${C.ac}`,borderRadius:14,padding:"14px 16px",marginTop:16,marginBottom:16,textAlign:"center"}}>
         <div style={{fontSize:12,color:C.al,marginBottom:3}}>🔜 Kommande funktioner</div>
         <div style={{fontSize:12,color:C.mu,lineHeight:1.6}}>Löneberäkning · Disponibel inkomst · Firebase-sync</div>
       </div>
-      <div style={{textAlign:"center"}}>
-        <button onClick={onEdit} style={{background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:"12px 24px",color:C.tx,cursor:"pointer",fontSize:13,fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:7}}>
-          ✏️ Ändra profil
-        </button>
       </div>
     </div>
   );
