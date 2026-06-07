@@ -143,8 +143,8 @@ function monthTotal(allItems,m) {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const S = {
-  app:{minHeight:"100vh",minHeight:"100dvh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"16px 12px",background:C.bg,color:C.tx,fontFamily:"system-ui,-apple-system,sans-serif"},
-  card:{background:C.sf,border:`1px solid ${C.br}`,borderRadius:20,padding:"24px 20px",width:"100%",maxWidth:"100%",position:"relative",overflow:"hidden"},
+  app:{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",paddingTop:"10vh",padding:"10vh 12px 24px",background:C.bg,color:C.tx,fontFamily:"system-ui,-apple-system,sans-serif"},
+  card:{background:C.sf,border:`1px solid ${C.br}`,borderRadius:20,padding:"28px 24px",width:"100%",maxWidth:540,position:"relative",overflow:"hidden"},
   bar:{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#6c63ff,#8b85ff,#4ecca3)"},
   prog:{display:"flex",gap:4,marginBottom:24},
   dot:(done,active)=>({height:3,flex:1,borderRadius:2,background:done?"#6c63ff":active?"#8b85ff":C.br,transition:"background 0.3s"}),
