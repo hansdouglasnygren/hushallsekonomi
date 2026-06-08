@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 
 const C = {
-  bg:"#0f0f13",sf:"#18181f",cd:"#1e1e28",br:"#2a2a38",
-  ac:"#6c63ff",al:"#8b85ff",ad:"#6c63ff22",
-  tx:"#f0eeff",mu:"#8884aa",ok:"#4ecca3",wa:"#f5a623",er:"#ff6b6b"
+  bg:"#111318",sf:"#1c1f2e",cd:"#252836",br:"#2e3147",
+  ac:"#6c63ff",al:"#a89cff",ad:"#6c63ff1a",
+  tx:"#ffffff",mu:"#9b9fc0",ok:"#3dd9a4",wa:"#f5a623",er:"#ff6b6b",
+  txs:"#e2e4f0",  // slightly dimmed white for secondary text
 };
 
 const MONTHS = ["Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"];
@@ -786,101 +787,99 @@ function OverviewTab({t, purchases, budgets, onGoLog}) {
     if(annualByMonth[m]) upcomingMonths.push({month:m, items:annualByMonth[m]});
   }
 
-  const secTitle = (txt,sub) => (
-    <div style={{marginBottom:12}}>
-      <div style={{fontSize:12,fontWeight:700,color:C.tx,letterSpacing:0.3}}>{txt}</div>
-      {sub&&<div style={{fontSize:11,color:C.mu,marginTop:2}}>{sub}</div>}
+  const secTitle = (txt,sub,color="#fff") => (
+    <div style={{marginBottom:14}}>
+      <div style={{fontSize:14,fontWeight:700,color,letterSpacing:0.1}}>{txt}</div>
+      {sub&&<div style={{fontSize:12,color:C.mu,marginTop:3}}>{sub}</div>}
     </div>
   );
 
-  const divider = <div style={{borderTop:`1px solid ${C.br}`,margin:"18px 0"}} />;
+  const divider = <div style={{borderTop:`1px solid ${C.br}`,margin:"20px 0"}} />;
 
   return (
     <div>
       {/* ── SECTION 1: FAST ─────────────────────────────────── */}
-      <div style={{background:C.sf,border:`1px solid ${C.br}`,borderRadius:16,padding:"16px 18px",marginBottom:10,position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#6c63ff,#4ecca3)"}} />
-        {secTitle("🔒 Fasta månadskostnader","Bolån, fordon, abonnemang, sparande — ändras inte")}
-
+      <div style={{background:`linear-gradient(135deg,#1e1b4b 0%,${C.sf} 100%)`,border:`1px solid #3730a366`,borderRadius:18,padding:"18px 18px",marginBottom:12,overflow:"hidden",position:"relative"}}>
+        <div style={{position:"absolute",top:-20,right:-20,width:120,height:120,borderRadius:"50%",background:"#6c63ff0d"}} />
+        {secTitle("🔒 Fasta månadskostnader","Bolån, fordon, abonnemang, sparande")}
         {fixedCats.map(cat=>(
-          <div key={cat.label} style={{marginBottom:10}}>
+          <div key={cat.label} style={{marginBottom:12}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-              <div style={{display:"flex",alignItems:"center",gap:7}}>
-                <span style={{fontSize:15}}>{cat.icon}</span>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:34,height:34,borderRadius:10,background:cat.color+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{cat.icon}</div>
                 <div>
-                  <div style={{fontSize:13,color:C.tx}}>{cat.label}</div>
-                  <div style={{fontSize:10,color:C.mu}}>{cat.sub}</div>
+                  <div style={{fontSize:13,color:"#fff",fontWeight:500}}>{cat.label}</div>
+                  <div style={{fontSize:11,color:C.mu}}>{cat.sub}</div>
                 </div>
               </div>
-              <span style={{fontWeight:700,color:cat.color,fontSize:14}}>{fmt(cat.value)}</span>
+              <span style={{fontWeight:700,color:cat.color,fontSize:15}}>{fmt(cat.value)}</span>
             </div>
-            <div style={{background:C.br,borderRadius:4,height:3,overflow:"hidden"}}>
-              <div style={{height:"100%",width:`${(cat.value/Math.max(fixedTotal,1))*100}%`,background:cat.color,borderRadius:4}} />
+            <div style={{background:"rgba(255,255,255,0.06)",borderRadius:6,height:3,overflow:"hidden",marginLeft:42}}>
+              <div style={{height:"100%",width:`${(cat.value/Math.max(fixedTotal,1))*100}%`,background:cat.color,borderRadius:6}} />
             </div>
           </div>
         ))}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:10,marginTop:4,borderTop:`1px solid ${C.br}`}}>
-          <span style={{fontSize:12,color:C.mu,textTransform:"uppercase",letterSpacing:1}}>Summa fast / mån</span>
-          <span style={{fontSize:20,fontWeight:700,color:C.al}}>{fmt(fixedTotal)}</span>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:12,marginTop:4,borderTop:"1px solid rgba(255,255,255,0.08)"}}>
+          <span style={{fontSize:11,color:C.mu,textTransform:"uppercase",letterSpacing:1.5}}>Summa fast / mån</span>
+          <span style={{fontSize:22,fontWeight:800,color:"#fff"}}>{fmt(fixedTotal)}</span>
         </div>
       </div>
 
       {divider}
 
       {/* ── SECTION 2: RÖRLIG ───────────────────────────────── */}
-      <div style={{background:C.sf,border:`1px solid ${C.br}`,borderRadius:16,padding:"16px 18px",marginBottom:10}}>
+      <div style={{background:C.sf,border:`1px solid ${C.br}`,borderRadius:18,padding:"18px 18px",marginBottom:12}}>
         {secTitle("📊 Rörliga utgifter — "+fmtMonthLabel(monthKey),"Faktiska köp denna månad vs budget")}
-
         {variableCats.length===0?(
-          <div style={{textAlign:"center",padding:"16px 0",color:C.mu,fontSize:13}}>
+          <div style={{textAlign:"center",padding:"20px 0",color:C.mu,fontSize:13}}>
             Inga köp loggade denna månad ännu.
-            <br/><button onClick={onGoLog} style={{background:"transparent",border:"none",color:C.ac,cursor:"pointer",fontSize:13,marginTop:6,textDecoration:"underline"}}>Gå till köplog →</button>
+            <br/><button onClick={onGoLog} style={{background:"transparent",border:"none",color:C.al,cursor:"pointer",fontSize:13,marginTop:8,textDecoration:"underline"}}>Gå till köplog →</button>
           </div>
         ):(
           <>
             {variableCats.map(cat=>(
-              <div key={cat.id} style={{marginBottom:10}}>
+              <div key={cat.id} style={{marginBottom:12}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                  <span style={{fontSize:13,display:"flex",alignItems:"center",gap:6}}><span>{cat.icon}</span>{cat.label}</span>
+                  <span style={{fontSize:13,color:"#fff",display:"flex",alignItems:"center",gap:7,fontWeight:500}}>
+                    <span style={{fontSize:16}}>{cat.icon}</span>{cat.label}
+                  </span>
                   <div style={{textAlign:"right"}}>
-                    <span style={{fontWeight:700,color:cat.over?C.er:cat.color,fontSize:13}}>{cat.spent.toLocaleString("sv-SE")} kr</span>
+                    <span style={{fontWeight:700,color:cat.over?C.er:cat.color,fontSize:14}}>{cat.spent.toLocaleString("sv-SE")} kr</span>
                     {cat.budget>0&&<span style={{fontSize:11,color:C.mu}}> / {cat.budget.toLocaleString("sv-SE")}</span>}
                   </div>
                 </div>
                 {cat.budget>0&&(
-                  <div style={{background:C.br,borderRadius:4,height:5,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${cat.pct}%`,background:cat.over?C.er:cat.color,borderRadius:4,transition:"width 0.4s"}} />
+                  <div style={{background:"rgba(255,255,255,0.06)",borderRadius:6,height:5,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${cat.pct}%`,background:cat.over?C.er:cat.color,borderRadius:6,transition:"width 0.4s",boxShadow:`0 0 6px ${cat.over?C.er:cat.color}88`}} />
                   </div>
                 )}
-                {cat.over&&<div style={{fontSize:10,color:C.er,marginTop:3}}>⚠ {(cat.spent-cat.budget).toLocaleString("sv-SE")} kr över budget</div>}
+                {cat.over&&<div style={{fontSize:10,color:C.er,marginTop:3,fontWeight:600}}>⚠ {(cat.spent-cat.budget).toLocaleString("sv-SE")} kr över budget</div>}
               </div>
             ))}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:10,marginTop:4,borderTop:`1px solid ${C.br}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:12,marginTop:4,borderTop:"1px solid rgba(255,255,255,0.08)"}}>
               <div>
-                <div style={{fontSize:12,color:C.mu,textTransform:"uppercase",letterSpacing:1}}>Spenderat denna månad</div>
-                {varBudget>0&&<div style={{fontSize:11,color:varSpent>varBudget?C.er:C.ok,marginTop:2}}>
-                  {varSpent>varBudget?`${(varSpent-varBudget).toLocaleString("sv-SE")} kr över budget`:`${(varBudget-varSpent).toLocaleString("sv-SE")} kr kvar av budget`}
+                <div style={{fontSize:11,color:C.mu,textTransform:"uppercase",letterSpacing:1.5}}>Spenderat denna månad</div>
+                {varBudget>0&&<div style={{fontSize:11,color:varSpent>varBudget?C.er:C.ok,marginTop:2,fontWeight:600}}>
+                  {varSpent>varBudget?`${(varSpent-varBudget).toLocaleString("sv-SE")} kr över budget`:`${(varBudget-varSpent).toLocaleString("sv-SE")} kr kvar`}
                 </div>}
               </div>
-              <span style={{fontSize:20,fontWeight:700,color:varSpent>varBudget?C.er:C.al}}>{fmt(varSpent)}</span>
+              <span style={{fontSize:22,fontWeight:800,color:varSpent>varBudget?C.er:"#fff"}}>{fmt(varSpent)}</span>
             </div>
           </>
         )}
-
-        {/* Recent purchases */}
         {recentPurchases.length>0&&(
-          <div style={{marginTop:14,paddingTop:12,borderTop:`1px solid ${C.br}`}}>
-            <div style={{fontSize:11,color:C.mu,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>Senaste köp</div>
+          <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid rgba(255,255,255,0.08)"}}>
+            <div style={{fontSize:10,color:C.mu,marginBottom:10,textTransform:"uppercase",letterSpacing:1.5}}>Senaste köp</div>
             {recentPurchases.map(p=>{
               const ci=PURCHASE_CATS.find(c=>c.id===p.cat)||{icon:"📦",color:C.mu};
               return (
-                <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:`1px solid ${C.br}44`,fontSize:13}}>
-                  <span style={{color:C.mu,display:"flex",alignItems:"center",gap:6}}><span>{ci.icon}</span>{p.desc}</span>
-                  <span style={{color:ci.color,fontWeight:600}}>{Number(p.amount).toLocaleString("sv-SE")} kr</span>
+                <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.05)",fontSize:13}}>
+                  <span style={{color:C.txs,display:"flex",alignItems:"center",gap:7}}><span style={{fontSize:15}}>{ci.icon}</span>{p.desc}</span>
+                  <span style={{color:ci.color,fontWeight:700}}>{Number(p.amount).toLocaleString("sv-SE")} kr</span>
                 </div>
               );
             })}
-            <button onClick={onGoLog} style={{background:"transparent",border:"none",color:C.ac,cursor:"pointer",fontSize:12,marginTop:8,textDecoration:"underline",padding:0}}>
+            <button onClick={onGoLog} style={{background:"transparent",border:"none",color:C.al,cursor:"pointer",fontSize:12,marginTop:10,textDecoration:"underline",padding:0,fontWeight:600}}>
               Visa alla köp →
             </button>
           </div>
@@ -890,68 +889,67 @@ function OverviewTab({t, purchases, budgets, onGoLog}) {
       {divider}
 
       {/* ── SECTION 3: ÅRSUTGIFTER ──────────────────────────── */}
-      <div style={{background:C.sf,border:`1px solid ${C.br}`,borderRadius:16,padding:"16px 18px",marginBottom:10}}>
-        {secTitle("📅 Årsutgifter","Betalningar som sker en gång per år — i kronologisk ordning")}
-
+      <div style={{background:C.sf,border:`1px solid ${C.br}`,borderRadius:18,padding:"18px 18px",marginBottom:12}}>
+        {secTitle("📅 Årsutgifter","Betalningar en gång per år — kronologisk ordning")}
         {annualTotal===0?(
-          <div style={{textAlign:"center",padding:"12px 0",color:C.mu,fontSize:13}}>Inga årsbetalningar registrerade ännu.</div>
+          <div style={{textAlign:"center",padding:"16px 0",color:C.mu,fontSize:13}}>Inga årsbetalningar registrerade ännu.</div>
         ):(
           <>
             {upcomingMonths.map(({month,items})=>{
-              const isPast = month < nowMonth;
-              const isCurrent = month === nowMonth;
+              const isPast=month<nowMonth;
+              const isCurrent=month===nowMonth;
               return (
                 <div key={month} style={{marginBottom:14}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                    <div style={{width:6,height:6,borderRadius:"50%",background:isCurrent?C.ok:isPast?C.br:C.wa,flexShrink:0}} />
-                    <span style={{fontSize:11,fontWeight:600,color:isCurrent?C.ok:isPast?C.mu:C.wa,textTransform:"uppercase",letterSpacing:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
+                    <div style={{width:7,height:7,borderRadius:"50%",background:isCurrent?C.ok:isPast?"#2e3147":C.wa,flexShrink:0}} />
+                    <span style={{fontSize:11,fontWeight:700,color:isCurrent?C.ok:isPast?C.mu:C.wa,textTransform:"uppercase",letterSpacing:1.5}}>
                       {MONTHS[month-1]}{isCurrent?" — denna månad":""}
                     </span>
-                    <span style={{fontSize:11,color:C.mu,marginLeft:"auto"}}>{items.reduce((a,i)=>a+Number(i.entry.value||0),0).toLocaleString("sv-SE")} kr</span>
+                    <span style={{fontSize:12,color:C.mu,marginLeft:"auto",fontWeight:600}}>{items.reduce((a,i)=>a+Number(i.entry.value||0),0).toLocaleString("sv-SE")} kr</span>
                   </div>
                   {items.map((item,i)=>(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0 6px 14px",borderBottom:`1px solid ${C.br}44`,fontSize:13,opacity:isPast?0.5:1}}>
-                      <span style={{color:C.mu,display:"flex",alignItems:"center",gap:6}}>
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0 7px 16px",borderBottom:"1px solid rgba(255,255,255,0.05)",fontSize:13,opacity:isPast?0.45:1}}>
+                      <span style={{color:C.txs,display:"flex",alignItems:"center",gap:7}}>
                         <span style={{width:7,height:7,borderRadius:"50%",background:item.color,display:"inline-block",flexShrink:0}} />
                         {item.label}
                       </span>
-                      <span style={{color:item.color,fontWeight:600}}>{Number(item.entry.value||0).toLocaleString("sv-SE")} kr</span>
+                      <span style={{color:item.color,fontWeight:700}}>{Number(item.entry.value||0).toLocaleString("sv-SE")} kr</span>
                     </div>
                   ))}
                 </div>
               );
             })}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:10,marginTop:4,borderTop:`1px solid ${C.br}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:12,marginTop:4,borderTop:"1px solid rgba(255,255,255,0.08)"}}>
               <div>
-                <div style={{fontSize:12,color:C.mu,textTransform:"uppercase",letterSpacing:1}}>Totalt per år</div>
+                <div style={{fontSize:11,color:C.mu,textTransform:"uppercase",letterSpacing:1.5}}>Totalt per år</div>
                 <div style={{fontSize:11,color:C.mu,marginTop:2}}>≈ {fmt(annualTotal/12)}/mån i snitt</div>
               </div>
-              <span style={{fontSize:20,fontWeight:700,color:C.wa}}>{annualTotal.toLocaleString("sv-SE")} kr</span>
+              <span style={{fontSize:22,fontWeight:800,color:C.wa}}>{annualTotal.toLocaleString("sv-SE")} kr</span>
             </div>
           </>
         )}
       </div>
 
       {/* ── GRAND TOTAL ─────────────────────────────────────── */}
-      <div style={{background:"linear-gradient(135deg,#6c63ff18,#4ecca318)",border:`1px solid ${C.ac}`,borderRadius:16,padding:"16px 18px",marginTop:4}}>
-        <div style={{fontSize:11,color:C.mu,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Sammanlagd månadskostnad</div>
-        <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:12}}>
+      <div style={{background:"linear-gradient(135deg,#1e1b4b,#1a2640)",border:`1px solid #3730a355`,borderRadius:18,padding:"18px 18px",marginTop:4}}>
+        <div style={{fontSize:11,color:C.mu,textTransform:"uppercase",letterSpacing:1.5,marginBottom:12}}>Sammanlagd månadskostnad</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:13}}>
             <span style={{color:C.mu}}>Fasta kostnader</span>
-            <span style={{color:C.al,fontWeight:600}}>{fmt(fixedTotal)}</span>
+            <span style={{color:C.al,fontWeight:700}}>{fmt(fixedTotal)}</span>
           </div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:13}}>
             <span style={{color:C.mu}}>Rörliga (denna månad)</span>
-            <span style={{color:C.er,fontWeight:600}}>{fmt(varSpent)}</span>
+            <span style={{color:C.er,fontWeight:700}}>{fmt(varSpent)}</span>
           </div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:13}}>
             <span style={{color:C.mu}}>Årsutgifter (månadssnitt)</span>
-            <span style={{color:C.wa,fontWeight:600}}>{fmt(annualTotal/12)}</span>
+            <span style={{color:C.wa,fontWeight:700}}>{fmt(annualTotal/12)}</span>
           </div>
         </div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:10,borderTop:`1px solid ${C.ac}44`}}>
-          <span style={{fontSize:12,color:C.mu,textTransform:"uppercase",letterSpacing:1}}>Total / mån</span>
-          <span style={{fontSize:24,fontWeight:700,color:C.al}}>{fmt(fixedTotal+varSpent+annualTotal/12)}</span>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:14,borderTop:"1px solid rgba(255,255,255,0.1)"}}>
+          <span style={{fontSize:12,color:C.mu,textTransform:"uppercase",letterSpacing:1.5}}>Total / mån</span>
+          <span style={{fontSize:28,fontWeight:800,color:"#fff"}}>{fmt(fixedTotal+varSpent+annualTotal/12)}</span>
         </div>
       </div>
     </div>
@@ -1199,14 +1197,17 @@ function Dashboard({data,onEdit,purchases,setPurchases}) {
   return (
     <div style={{width:"100%",maxWidth:"100%",margin:"0 auto",padding:"0 0 80px",background:C.bg,minHeight:"100vh",minHeight:"100dvh"}}>
       {/* Header */}
-      <div style={{background:"linear-gradient(180deg,#18181f 0%,#0f0f13 100%)",padding:"52px 20px 20px",borderBottom:`1px solid ${C.br}`,marginBottom:0}}>
-        <div style={{fontSize:10,letterSpacing:2,color:C.ac,textTransform:"uppercase",marginBottom:6}}>Hushållsekonomi</div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+      <div style={{background:"linear-gradient(160deg,#1e1b4b 0%,#1c1f2e 60%,#111318 100%)",padding:"52px 20px 24px",marginBottom:0}}>
+        <div style={{fontSize:10,letterSpacing:3,color:C.al,textTransform:"uppercase",marginBottom:8,fontWeight:600}}>Hushållsekonomi</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <div>
-            <h1 style={{fontSize:28,fontWeight:800,marginBottom:2,letterSpacing:-0.5}}>{data.name||"Ert hushåll"}</h1>
-            <div style={{color:C.mu,fontSize:13}}>{data.adults??2} vuxna · {data.children??0} barn</div>
+            <h1 style={{fontSize:30,fontWeight:800,marginBottom:4,letterSpacing:-0.5,color:"#fff"}}>{data.name||"Ert hushåll"}</h1>
+            <div style={{color:C.mu,fontSize:13,display:"flex",alignItems:"center",gap:6}}>
+              <span style={{background:C.cd,borderRadius:20,padding:"2px 10px",fontSize:11}}>{data.adults??2} vuxna</span>
+              <span style={{background:C.cd,borderRadius:20,padding:"2px 10px",fontSize:11}}>{data.children??0} barn</span>
+            </div>
           </div>
-          <button onClick={onEdit} style={{background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:"10px 14px",color:C.mu,cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>
+          <button onClick={onEdit} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:12,padding:"10px 14px",color:"#fff",cursor:"pointer",fontSize:12,fontFamily:"inherit",backdropFilter:"blur(8px)"}}>
             ✏️ Ändra
           </button>
         </div>
@@ -1228,10 +1229,10 @@ function Dashboard({data,onEdit,purchases,setPurchases}) {
       )}
 
       {/* Tab bar — sticky */}
-      <div style={{position:"sticky",top:0,zIndex:10,background:C.bg,padding:"12px 16px 8px",borderBottom:`1px solid ${C.br}`}}>
-        <div style={{display:"flex",gap:4,background:C.cd,border:`1px solid ${C.br}`,borderRadius:12,padding:4}}>
+      <div style={{position:"sticky",top:0,zIndex:10,background:C.bg,padding:"10px 16px 8px",borderBottom:`1px solid ${C.br}`}}>
+        <div style={{display:"flex",gap:3,background:C.cd,border:`1px solid ${C.br}`,borderRadius:14,padding:4}}>
           {[["overview","Översikt"],["chart","Diagram"],["calendar","Månadsplan"],["log","Köplog"]].map(([id,lbl])=>(
-            <button key={id} style={{flex:1,padding:"9px 4px",border:"none",borderRadius:9,fontFamily:"inherit",fontSize:12,fontWeight:tab===id?700:400,cursor:"pointer",background:tab===id?C.ac:"transparent",color:tab===id?"white":C.mu,transition:"all 0.15s"}} onClick={()=>setTab(id)}>{lbl}</button>
+            <button key={id} style={{flex:1,padding:"10px 4px",border:"none",borderRadius:11,fontFamily:"inherit",fontSize:12,fontWeight:tab===id?700:500,cursor:"pointer",background:tab===id?C.ac:"transparent",color:tab===id?"white":C.mu,transition:"all 0.15s",letterSpacing:tab===id?0.2:0}} onClick={()=>setTab(id)}>{lbl}</button>
           ))}
         </div>
       </div>
