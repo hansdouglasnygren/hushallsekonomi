@@ -845,18 +845,39 @@ function StepSummary({data,onBack,onFinish}) {
 }
 
 // ── OverviewTab — three sections: fixed / variable / annual ──────────────────
-function OverviewTab({t, purchases, budgets, onGoLog}) {
+function OverviewTab({t, purchases, budgets, onGoLog, data}) {
   const monthKey = getCurrentMonthKey();
   const thisMonth = purchases.filter(p => p.monthKey === monthKey);
 
-  // ── Section 1: Fixed monthly costs (from onboarding, never changes)
-  const fixedCats = [
-    {label:"Boende",       value:t.housing,  icon:"🏠", color:CATCOL.housing,  sub:"Lån, ränta, amortering, avgifter"},
-    {label:"Fordon",       value:t.vehicle,  icon:"🚗", color:CATCOL.vehicle,  sub:"Lån, försäkring, drivmedel"},
-    {label:"Abonnemang",   value:t.subs,     icon:"📱", color:CATCOL.subs,     sub:"Streaming, bredband, gym..."},
-    {label:"Sparande",     value:t.savings,  icon:"💰", color:CATCOL.savings,  sub:"ISK, pension, barnspar"},
-  ].filter(c=>c.value>0);
-  const fixedTotal = fixedCats.reduce((a,c)=>a+c.value, 0);
+  // Same granular logic as ChartSection
+  const housingColors=["#4a7c59","#6fa882","#3d6b4a","#8bc4a0","#2d5240","#a8d4b8"];
+  const vehicleColors=["#d4882a","#e8a84a","#b8721f","#f0c070"];
+
+  const granularCats=[];
+  const pd=data?.propertyDetails||{};
+  PTYPES.forEach((pt,pi)=>{
+    const d=pd[pt.id]; if(!d) return;
+    const items=t.breakdown.housing?.filter(i=>i.label.startsWith(pt.label))||[];
+    const total=items.reduce((a,i)=>a+i.value,0);
+    if(total>0) granularCats.push({id:`h_${pt.id}`,label:pt.label,icon:pt.icon,value:total,color:housingColors[pi%housingColors.length],sub:"Boende",breakdown:items});
+  });
+  const vd=data?.vehicleDetails||{}, vc=data?.vehicleCounts||{}; let vIdx=0;
+  VTYPES.forEach(vt=>{
+    for(let i=0;i<(vc[vt.id]||0);i++){
+      const key=`${vt.id}_${i}`, d=vd[key];
+      const name=d?.namn||`${vt.label} ${i>0?i+1:""}`.trim();
+      const items=t.breakdown.vehicle?.filter(item=>item.label.startsWith(name+' –'))||[];
+      const total=items.reduce((a,i2)=>a+i2.value,0);
+      if(total>0) granularCats.push({id:`v_${key}`,label:name,icon:vt.icon,value:total,color:vehicleColors[vIdx%vehicleColors.length],sub:"Fordon",breakdown:items});
+      vIdx++;
+    }
+  });
+  if(!granularCats.some(c=>c.sub==="Fordon")&&t.vehicle>0)
+    granularCats.push({id:"vehicle",label:"Fordon",icon:"🚗",value:t.vehicle,color:vehicleColors[0],sub:"Fordon",breakdown:t.breakdown.vehicle||[]});
+  if(t.subs>0)    granularCats.push({id:"subs",   label:"Abonnemang",      icon:"📱",value:t.subs,   color:"#7c6a4a",sub:"Abonnemang",  breakdown:t.breakdown.subs||[]});
+  if(t.savings>0) granularCats.push({id:"savings",label:"Sparande",         icon:"💰",value:t.savings,color:"#2980b9",sub:"Sparande",    breakdown:t.breakdown.savings||[]});
+
+  const fixedTotal=granularCats.reduce((a,c)=>a+c.value,0);
 
   // ── Section 2: Variable — budget vs actual from purchase log
   const variableCats = PURCHASE_CATS.filter(c =>
@@ -903,8 +924,8 @@ function OverviewTab({t, purchases, budgets, onGoLog}) {
       <div style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:18,padding:"18px 18px",marginBottom:12,overflow:"hidden",position:"relative",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:4,background:"linear-gradient(90deg,#4a7c59,#7ab893)"}} />
         {secTitle("🔒 Fasta månadskostnader","Bolån, fordon, abonnemang, sparande",C.tx)}
-        {fixedCats.map(cat=>{
-          const subs = t.breakdown[cat.id]?.filter(i=>i.value>0)||[];
+        {granularCats.map(cat=>{
+          const subs=cat.breakdown.filter(i=>i.value>0);
           return (
             <div key={cat.label} style={{marginBottom:10,borderRadius:12,overflow:"hidden",border:`1px solid ${cat.color}22`}}>
               {/* Huvudrad */}
@@ -1361,9 +1382,7 @@ function Dashboard({data,onEdit,purchases,setPurchases}) {
       {/* Content */}
       <div style={{padding:"16px 16px 0"}}>
 
-      {tab==="overview"&&(
-        <OverviewTab t={t} purchases={purchases} budgets={budgets} onGoLog={()=>setTab("log")} />
-      )}
+      {tab==="overview"&&<OverviewTab t={t} purchases={purchases} budgets={budgets} onGoLog={()=>setTab("log")} data={data} />}
       {tab==="chart"&&<ChartSection t={t} data={data} />}
       {tab==="calendar"&&<MonthlyCalendar t={t} />}
       {tab==="log"&&<PurchaseLog purchases={purchases} setPurchases={setPurchases} budgets={budgets} />}
