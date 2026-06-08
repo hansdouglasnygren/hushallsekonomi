@@ -247,23 +247,49 @@ function CounterRow({label,value,onChange,min=0,max=10}) {
   );
 }
 
-function PropCostBlock({d,update,typeId}) {
+function PropCostBlock({d,update,typeId,label="Omkostnader"}) {
   const entries=d.propCostEntries||{}, custom=d.customPropCosts||[], toggled=d._propCostSelected||[];
   const toggle=id=>update(typeId,"_propCostSelected",toggled.includes(id)?toggled.filter(x=>x!==id):[...toggled,id]);
   const addCustom=()=>update(typeId,"customPropCosts",[...custom,{label:"",entry:{period:"month",value:""}}]);
   const updateCustom=(i,field,val)=>{const u=[...custom];u[i]={...u[i],[field]:val};update(typeId,"customPropCosts",u);};
+
+  // Live total — uppdateras i realtid
+  const total=toggled.reduce((sum,id)=>{
+    const e=entries[id]; return sum+(e?.value?toMonthly(e):0);
+  },0)+custom.reduce((sum,c)=>sum+(c.entry?.value?toMonthly(c.entry):0),0);
+
   return (
-    <div style={{marginTop:14,borderTop:`1px solid ${C.br}`,paddingTop:14}}>
-      <div style={{fontSize:11,letterSpacing:1.5,textTransform:"uppercase",color:C.ok,marginBottom:12}}>🏷️ Fasta avgifter för denna bostad</div>
-      <div style={{display:"flex",flexWrap:"wrap",marginBottom:10}}>
+    <div style={{marginTop:16,borderTop:`1px solid ${C.br}`,paddingTop:16}}>
+      {/* Rubrik med live-summa */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+        <div style={{fontSize:11,letterSpacing:1.5,textTransform:"uppercase",color:C.ac,fontWeight:700}}>{label}</div>
+        <div style={{textAlign:"right"}}>
+          <div style={{fontSize:10,color:C.mu,marginBottom:1}}>totalt / mån</div>
+          <div style={{fontSize:total>0?20:14,fontWeight:800,color:total>0?C.ac:C.mu,transition:"all 0.2s"}}>
+            {Math.round(total).toLocaleString("sv-SE")} kr
+          </div>
+        </div>
+      </div>
+
+      {/* Tagg-väljare */}
+      <div style={{display:"flex",flexWrap:"wrap",marginBottom:toggled.length>0?10:4}}>
         {PROPTAGS.map(tag=>(
           <button key={tag.id} style={S.tag(toggled.includes(tag.id))} onClick={()=>toggle(tag.id)}>{tag.icon} {tag.label}</button>
         ))}
       </div>
+
+      {/* Valda fält */}
       {toggled.map(id=>{
         const tag=PROPTAGS.find(t=>t.id===id);
-        return <FlexMoneyInput key={id} label={`${tag.icon} ${tag.label}`} entry={entries[id]||{}} onChange={e=>update(typeId,"propCostEntries",{...entries,[id]:e})} />;
+        const val=entries[id]?.value;
+        return (
+          <div key={id} style={{position:"relative"}}>
+            <FlexMoneyInput label={`${tag.icon} ${tag.label}`} entry={entries[id]||{}} onChange={e=>update(typeId,"propCostEntries",{...entries,[id]:e})} />
+          </div>
+        );
       })}
+
+      {/* Egna kostnader */}
       {custom.map((c,i)=>(
         <div key={i} style={{marginBottom:6}}>
           <input style={{...S.inp,marginBottom:4}} placeholder="Namn på kostnad" value={c.label} onChange={e=>updateCustom(i,"label",e.target.value)} />
@@ -273,6 +299,14 @@ function PropCostBlock({d,update,typeId}) {
       <button onClick={addCustom} style={{background:"transparent",border:`1px dashed ${C.br}`,borderRadius:10,padding:"8px 12px",color:C.mu,cursor:"pointer",fontSize:12,width:"100%",marginBottom:4}}>
         + Lägg till egen kostnad
       </button>
+
+      {/* Summa-rad om något är ifyllt */}
+      {total>0&&(
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10,paddingTop:10,borderTop:`1px solid ${C.br}`}}>
+          <span style={{fontSize:11,color:C.mu,textTransform:"uppercase",letterSpacing:1}}>Summa {label.toLowerCase()}</span>
+          <span style={{fontSize:16,fontWeight:800,color:C.ac}}>{Math.round(total).toLocaleString("sv-SE")} kr/mån</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -588,13 +622,13 @@ function StepPropertyDetails({data,setData,onNext,onBack}) {
           <div key={tid} style={S.lcard}>
             <div style={S.lcardT}>{pt?.icon} {pt?.label}</div>
             {tid==="hyresratt"?(
-              <><FlexMoneyInput label="Månadshyra" entry={d.hyraEntry||{}} onChange={e=>update(tid,"hyraEntry",e)} /><PropCostBlock d={d} update={update} typeId={tid} /></>
+              <><FlexMoneyInput label="Månadshyra" entry={d.hyraEntry||{}} onChange={e=>update(tid,"hyraEntry",e)} /><PropCostBlock d={d} update={update} typeId={tid} label="Övriga kostnader för hyresrätten" /></>
             ):(
               <>
                 <LoanBlock d={d} update={update} typeId={tid} />
-                {tid==="bostadsratt"&&<FlexMoneyInput label="Föreningsavgift" entry={d.avgiftEntry||{}} onChange={e=>update(tid,"avgiftEntry",e)} />}
-                {(tid==="villa"||tid==="sommarstuga"||tid==="utomlands")&&<FlexMoneyInput label="Driftkostnader (el, vatten...)" entry={d.driftEntry||{}} onChange={e=>update(tid,"driftEntry",e)} />}
-                <PropCostBlock d={d} update={update} typeId={tid} />
+                {tid==="bostadsratt"&&<FlexMoneyInput label="Månadsavgift till förening" entry={d.avgiftEntry||{}} onChange={e=>update(tid,"avgiftEntry",e)} />}
+                <PropCostBlock d={d} update={update} typeId={tid}
+                  label={tid==="villa"?"Omkostnader villa":tid==="sommarstuga"?"Omkostnader sommarstuga":tid==="utomlands"?"Omkostnader utomlandsbostad":"Övriga kostnader"} />
               </>
             )}
           </div>
