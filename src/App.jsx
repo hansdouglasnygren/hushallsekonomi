@@ -918,42 +918,57 @@ function OverviewTab({t, purchases, budgets, onGoLog, data}) {
 
   const divider = <div style={{borderTop:`1px solid ${C.br}`,margin:"20px 0"}} />;
 
+  const [expanded,setExpanded]=useState({});
+  const toggleExpand=id=>setExpanded(prev=>({...prev,[id]:!prev[id]}));
+
   return (
     <div>
       {/* ── SECTION 1: FAST ─────────────────────────────────── */}
       <div style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:18,padding:"18px 18px",marginBottom:12,overflow:"hidden",position:"relative",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:4,background:"linear-gradient(90deg,#4a7c59,#7ab893)"}} />
-        {secTitle("🔒 Fasta månadskostnader","Bolån, fordon, abonnemang, sparande",C.tx)}
+        {secTitle("🔒 Fasta månadskostnader","Tryck på en rad för att se detaljer",C.tx)}
         {granularCats.map(cat=>{
           const subs=cat.breakdown.filter(i=>i.value>0);
+          const isOpen=!!expanded[cat.id];
           return (
-            <div key={cat.label} style={{marginBottom:10,borderRadius:12,overflow:"hidden",border:`1px solid ${cat.color}22`}}>
-              {/* Huvudrad */}
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:cat.color+"0d"}}>
+            <div key={cat.id} style={{marginBottom:10,borderRadius:12,overflow:"hidden",border:`1px solid ${cat.color}${isOpen?"44":"22"}`,transition:"border-color 0.2s"}}>
+              {/* Huvudrad — klickbar */}
+              <button onClick={()=>toggleExpand(cat.id)}
+                style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 12px",background:isOpen?cat.color+"18":cat.color+"0d",width:"100%",border:"none",cursor:"pointer",transition:"background 0.2s"}}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                   <div style={{width:34,height:34,borderRadius:9,background:cat.color+"22",border:`1px solid ${cat.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>{cat.icon}</div>
-                  <div>
+                  <div style={{textAlign:"left"}}>
                     <div style={{fontSize:13,color:C.tx,fontWeight:700}}>{cat.label}</div>
-                    <div style={{fontSize:10,color:C.mu}}>{cat.sub}</div>
+                    <div style={{fontSize:10,color:C.mu}}>{subs.length} poster · {cat.sub}</div>
                   </div>
                 </div>
-                <span style={{fontWeight:800,color:cat.color,fontSize:15}}>{fmt(cat.value)}</span>
-              </div>
-              {/* Underkategorier */}
-              {subs.length>0&&(
-                <div style={{background:"#faf7f2",borderTop:`1px solid ${cat.color}18`}}>
-                  {subs.map((sub,i)=>(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px 7px 20px",borderBottom:i<subs.length-1?`1px solid ${C.br}`:undefined}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontWeight:800,color:cat.color,fontSize:15}}>{fmt(cat.value)}</span>
+                  <span style={{color:cat.color,fontSize:14,transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+                </div>
+              </button>
+
+              {/* Underkategorier — expanderbara */}
+              {isOpen&&subs.length>0&&(
+                <div style={{background:"#faf7f2",borderTop:`1px solid ${cat.color}22`,animation:"fadeIn 0.15s ease"}}>
+                  {subs.sort((a,b)=>b.value-a.value).map((sub,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px 8px 20px",borderBottom:i<subs.length-1?`1px solid ${C.br}`:undefined}}>
                       <span style={{fontSize:12,color:C.mu,display:"flex",alignItems:"center",gap:6}}>
                         <span style={{width:5,height:5,borderRadius:"50%",background:cat.color+"88",display:"inline-block",flexShrink:0}}/>
                         {sub.label.split(" – ").slice(1).join(" – ")||sub.label}
                         {sub.entry?.period==="year"&&<span style={{background:C.wa+"22",border:`1px solid ${C.wa}44`,borderRadius:4,padding:"1px 5px",fontSize:9,color:C.wa,marginLeft:3}}>årsvis</span>}
                       </span>
-                      <span style={{fontSize:12,fontWeight:600,color:cat.color+"bb"}}>{fmt(sub.value)}/mån</span>
+                      <span style={{fontSize:12,fontWeight:600,color:cat.color+"cc"}}>{fmt(sub.value)}/mån</span>
                     </div>
                   ))}
+                  {/* Delsumma */}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px",background:cat.color+"08",borderTop:`1px solid ${cat.color}22`}}>
+                    <span style={{fontSize:11,color:C.mu,fontWeight:600,textTransform:"uppercase",letterSpacing:1}}>Totalt {cat.label}</span>
+                    <span style={{fontSize:14,fontWeight:800,color:cat.color}}>{fmt(cat.value)}/mån</span>
+                  </div>
                 </div>
               )}
+
               {/* Progressbar */}
               <div style={{background:cat.color+"11",height:3}}>
                 <div style={{height:"100%",width:`${(cat.value/Math.max(fixedTotal,1))*100}%`,background:cat.color,transition:"width 0.4s"}} />
