@@ -425,17 +425,72 @@ function BarChart({slices,total,activeId,onHover}) {
   );
 }
 
-function ChartSection({t}) {
+function ChartSection({t,data}) {
   const [ct,setCt]=useState("donut"),[activeId,setActiveId]=useState(null);
-  const slices=[
-    {id:"housing",label:"Boende",icon:"🏠",value:t.housing,color:CATCOL.housing},
-    {id:"vehicle",label:"Fordon",icon:"🚗",value:t.vehicle,color:CATCOL.vehicle},
-    {id:"subs",label:"Abonnemang",icon:"📱",value:t.subs,color:CATCOL.subs},
-    {id:"living",label:"Levnadskostnader",icon:"🛒",value:t.living,color:CATCOL.living},
-    {id:"savings",label:"Sparande",icon:"💰",value:t.savings,color:CATCOL.savings},
-  ].filter(s=>s.value>0);
+
+  // Build granular slices — per fastighet, per fordon, sedan resten
+  const housingColors=["#4a7c59","#6fa882","#3d6b4a","#8bc4a0","#2d5240","#a8d4b8"];
+  const vehicleColors=["#d4882a","#e8a84a","#b8721f","#f0c070"];
+
+  const slices=[];
+
+  // Boende — per fastighet
+  const pd=data?.propertyDetails||{};
+  PTYPES.forEach((pt,pi)=>{
+    const d=pd[pt.id];
+    if(!d) return;
+    const items=t.breakdown.housing?.filter(i=>i.label.startsWith(pt.label))||[];
+    const total=items.reduce((a,i)=>a+i.value,0);
+    if(total>0) slices.push({
+      id:`housing_${pt.id}`,
+      label:pt.label,
+      icon:pt.icon,
+      value:total,
+      color:housingColors[pi%housingColors.length],
+      cat:"housing",
+      breakdown:items,
+    });
+  });
+
+  // Fordon — per fordon
+  const vd=data?.vehicleDetails||{};
+  const vc=data?.vehicleCounts||{};
+  let vIdx=0;
+  VTYPES.forEach(vt=>{
+    for(let i=0;i<(vc[vt.id]||0);i++){
+      const key=`${vt.id}_${i}`;
+      const d=vd[key];
+      if(!d) { vIdx++; continue; }
+      const name=d.namn||`${vt.label} ${i+1}`;
+      const items=t.breakdown.vehicle?.filter(item=>item.label.startsWith(name+' –')||item.label.startsWith((d.namn||'')+' –'))||[];
+      // fallback: split vehicle total evenly if no name match
+      const total=items.reduce((a,i2)=>a+i2.value,0);
+      if(total>0) slices.push({
+        id:`vehicle_${key}`,
+        label:name,
+        icon:vt.icon,
+        value:total,
+        color:vehicleColors[vIdx%vehicleColors.length],
+        cat:"vehicle",
+        breakdown:items,
+      });
+      vIdx++;
+    }
+  });
+
+  // Om inga per-fordon matchade, lägg hela fordon som ett segment
+  if(!slices.some(s=>s.cat==="vehicle")&&t.vehicle>0){
+    slices.push({id:"vehicle",label:"Fordon",icon:"🚗",value:t.vehicle,color:vehicleColors[0],cat:"vehicle",breakdown:t.breakdown.vehicle||[]});
+  }
+
+  // Abonnemang, Levnadskostnader, Sparande
+  if(t.subs>0)    slices.push({id:"subs",   label:"Abonnemang",      icon:"📱",value:t.subs,   color:"#7c6a4a",cat:"subs",   breakdown:t.breakdown.subs||[]});
+  if(t.living>0)  slices.push({id:"living", label:"Levnadskostnader",icon:"🛒",value:t.living, color:"#c0392b",cat:"living", breakdown:t.breakdown.living||[]});
+  if(t.savings>0) slices.push({id:"savings",label:"Sparande",         icon:"💰",value:t.savings,color:"#2980b9",cat:"savings",breakdown:t.breakdown.savings||[]});
+
   const active=slices.find(s=>s.id===activeId);
-  const bd=activeId?t.breakdown[activeId]||[]:[];
+  const total=slices.reduce((a,s)=>a+s.value,0);
+
   return (
     <div style={S.chartWrap}>
       <div style={{fontSize:11,color:C.mu,textTransform:"uppercase",letterSpacing:1.5,marginBottom:12}}>Fördelning av utgifter</div>
@@ -443,24 +498,27 @@ function ChartSection({t}) {
         <button style={S.tab(ct==="donut")} onClick={()=>setCt("donut")}>Cirkeldiagram</button>
         <button style={S.tab(ct==="bar")} onClick={()=>setCt("bar")}>Stapeldiagram</button>
       </div>
-      {ct==="donut"?<DonutChart slices={slices} total={t.total} activeId={activeId} onHover={setActiveId} />
-        :<BarChart slices={slices} total={t.total} activeId={activeId} onHover={setActiveId} />}
-      <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:14}}>
+      {ct==="donut"
+        ?<DonutChart slices={slices} total={total} activeId={activeId} onHover={setActiveId} />
+        :<BarChart slices={slices} total={total} activeId={activeId} onHover={setActiveId} />}
+
+      <div style={{display:"flex",flexDirection:"column",gap:4,marginTop:14}}>
         {slices.map(s=>(
           <div key={s.id} style={S.legRow(activeId===s.id)} onClick={()=>setActiveId(activeId===s.id?null:s.id)}>
             <div style={{width:9,height:9,borderRadius:"50%",background:s.color,flexShrink:0}} />
-            <span style={{flex:1,fontSize:12}}>{s.icon} {s.label}</span>
-            <span style={{fontSize:12,fontWeight:600,color:s.color}}>{fmt(s.value)}</span>
-            <span style={{fontSize:11,color:C.mu,minWidth:34,textAlign:"right"}}>{pct(s.value,t.total)}</span>
+            <span style={{fontSize:12,flex:1}}>{s.icon} {s.label}</span>
+            <span style={{fontSize:12,fontWeight:700,color:s.color}}>{fmt(s.value)}</span>
+            <span style={{fontSize:11,color:C.mu,minWidth:36,textAlign:"right"}}>{pct(s.value,total)}</span>
           </div>
         ))}
       </div>
-      {active&&bd.length>0&&(
+
+      {active&&active.breakdown.length>0&&(
         <div style={S.detPanel}>
           <div style={{fontSize:11,letterSpacing:1.5,textTransform:"uppercase",color:active.color,marginBottom:10}}>{active.icon} {active.label} — detaljer</div>
-          {bd.filter(i=>i.value>0).sort((a,b)=>b.value-a.value).map((item,i)=>(
+          {active.breakdown.filter(i=>i.value>0).sort((a,b)=>b.value-a.value).map((item,i)=>(
             <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:`1px solid ${C.br}`,fontSize:12}}>
-              <span style={{color:C.mu}}>{item.label}{item.entry?.period==="year"&&<span style={S.annBadge}>årsvis</span>}</span>
+              <span style={{color:C.mu}}>{item.label.split(" – ").slice(1).join(" – ")||item.label}{item.entry?.period==="year"&&<span style={S.annBadge}>årsvis</span>}</span>
               <span style={{color:active.color,fontWeight:600}}>{fmt(item.value)}/mån</span>
             </div>
           ))}
@@ -845,23 +903,43 @@ function OverviewTab({t, purchases, budgets, onGoLog}) {
       <div style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:18,padding:"18px 18px",marginBottom:12,overflow:"hidden",position:"relative",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:4,background:"linear-gradient(90deg,#4a7c59,#7ab893)"}} />
         {secTitle("🔒 Fasta månadskostnader","Bolån, fordon, abonnemang, sparande",C.tx)}
-        {fixedCats.map(cat=>(
-          <div key={cat.label} style={{marginBottom:12}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:36,height:36,borderRadius:10,background:cat.color+"18",border:`1px solid ${cat.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{cat.icon}</div>
-                <div>
-                  <div style={{fontSize:13,color:C.tx,fontWeight:600}}>{cat.label}</div>
-                  <div style={{fontSize:11,color:C.mu}}>{cat.sub}</div>
+        {fixedCats.map(cat=>{
+          const subs = t.breakdown[cat.id]?.filter(i=>i.value>0)||[];
+          return (
+            <div key={cat.label} style={{marginBottom:10,borderRadius:12,overflow:"hidden",border:`1px solid ${cat.color}22`}}>
+              {/* Huvudrad */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:cat.color+"0d"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:34,height:34,borderRadius:9,background:cat.color+"22",border:`1px solid ${cat.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>{cat.icon}</div>
+                  <div>
+                    <div style={{fontSize:13,color:C.tx,fontWeight:700}}>{cat.label}</div>
+                    <div style={{fontSize:10,color:C.mu}}>{cat.sub}</div>
+                  </div>
                 </div>
+                <span style={{fontWeight:800,color:cat.color,fontSize:15}}>{fmt(cat.value)}</span>
               </div>
-              <span style={{fontWeight:700,color:cat.color,fontSize:15}}>{fmt(cat.value)}</span>
+              {/* Underkategorier */}
+              {subs.length>0&&(
+                <div style={{background:"#faf7f2",borderTop:`1px solid ${cat.color}18`}}>
+                  {subs.map((sub,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 12px 7px 20px",borderBottom:i<subs.length-1?`1px solid ${C.br}`:undefined}}>
+                      <span style={{fontSize:12,color:C.mu,display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{width:5,height:5,borderRadius:"50%",background:cat.color+"88",display:"inline-block",flexShrink:0}}/>
+                        {sub.label.split(" – ").slice(1).join(" – ")||sub.label}
+                        {sub.entry?.period==="year"&&<span style={{background:C.wa+"22",border:`1px solid ${C.wa}44`,borderRadius:4,padding:"1px 5px",fontSize:9,color:C.wa,marginLeft:3}}>årsvis</span>}
+                      </span>
+                      <span style={{fontSize:12,fontWeight:600,color:cat.color+"bb"}}>{fmt(sub.value)}/mån</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Progressbar */}
+              <div style={{background:cat.color+"11",height:3}}>
+                <div style={{height:"100%",width:`${(cat.value/Math.max(fixedTotal,1))*100}%`,background:cat.color,transition:"width 0.4s"}} />
+              </div>
             </div>
-            <div style={{background:"#f0ebe0",borderRadius:6,height:4,overflow:"hidden",marginLeft:46}}>
-              <div style={{height:"100%",width:`${(cat.value/Math.max(fixedTotal,1))*100}%`,background:cat.color,borderRadius:6}} />
-            </div>
-          </div>
-        ))}
+          );
+        })}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:12,marginTop:8,borderTop:`1px solid ${C.br}`}}>
           <span style={{fontSize:11,color:C.mu,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>Summa fast / mån</span>
           <span style={{fontSize:24,fontWeight:800,color:C.ac}}>{fmt(fixedTotal)}</span>
@@ -1286,7 +1364,7 @@ function Dashboard({data,onEdit,purchases,setPurchases}) {
       {tab==="overview"&&(
         <OverviewTab t={t} purchases={purchases} budgets={budgets} onGoLog={()=>setTab("log")} />
       )}
-      {tab==="chart"&&<ChartSection t={t} />}
+      {tab==="chart"&&<ChartSection t={t} data={data} />}
       {tab==="calendar"&&<MonthlyCalendar t={t} />}
       {tab==="log"&&<PurchaseLog purchases={purchases} setPurchases={setPurchases} budgets={budgets} />}
 
