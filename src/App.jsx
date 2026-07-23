@@ -1328,7 +1328,201 @@ function PurchaseLog({purchases,setPurchases,budgets}) {
   );
 }
 
-function Dashboard({data,onEdit,purchases,setPurchases}) {
+// ── Income categories ────────────────────────────────────────────────────────
+const INCOME_CATS = [
+  {id:"lon",        label:"Lön",              icon:"💼", color:"#4a7c59"},
+  {id:"bidrag",     label:"Bidrag",           icon:"🏛️", color:"#2980b9"},
+  {id:"barnbidrag", label:"Barnbidrag",       icon:"👶", color:"#8e44ad"},
+  {id:"foraldralon",label:"Föräldrapenning",  icon:"🍼", color:"#16a085"},
+  {id:"pension",    label:"Pension",          icon:"👴", color:"#7c6a4a"},
+  {id:"forsaljning",label:"Försäljning",      icon:"🏷️", color:"#d4882a"},
+  {id:"hyra",       label:"Hyresintäkt",      icon:"🏠", color:"#4a7c59"},
+  {id:"utdelning",  label:"Utdelning/ränta",  icon:"📈", color:"#27ae60"},
+  {id:"ovrigt",     label:"Övrigt",           icon:"💰", color:"#8a7f6e"},
+];
+
+function IncomeTab({incomes,setIncomes,totalExpenses}) {
+  const [showAdd,setShowAdd]=useState(false);
+  const [form,setForm]=useState({desc:"",amount:"",cat:"lon",date:new Date().toISOString().slice(0,10),period:"month",month:1});
+  const [deleteId,setDeleteId]=useState(null);
+  const [filterCat,setFilterCat]=useState("all");
+
+  const monthKey=getCurrentMonthKey();
+  const allMonths=[...new Set(incomes.map(p=>p.monthKey))].sort().reverse();
+  if(!allMonths.includes(monthKey)) allMonths.unshift(monthKey);
+  const [viewMonth,setViewMonth]=useState(monthKey);
+
+  const monthIncomes=incomes.filter(p=>p.monthKey===viewMonth);
+  const filtered=filterCat==="all"?monthIncomes:monthIncomes.filter(p=>p.cat===filterCat);
+  const sorted=[...filtered].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const catTotals={};
+  monthIncomes.forEach(p=>{catTotals[p.cat]=(catTotals[p.cat]||0)+Number(p.amount);});
+  const totalIn=Object.values(catTotals).reduce((a,b)=>a+b,0);
+  const disposable=totalIn-totalExpenses;
+  const isCurrentMonth=viewMonth===monthKey;
+
+  const addIncome=()=>{
+    if(!form.desc||!form.amount) return;
+    const mk=form.date.slice(0,7);
+    setIncomes([...incomes,{id:Date.now(),desc:form.desc,amount:Number(form.amount),cat:form.cat,date:form.date,monthKey:mk}]);
+    setForm({desc:"",amount:"",cat:form.cat,date:new Date().toISOString().slice(0,10),period:"month",month:1});
+    setShowAdd(false);
+    setViewMonth(mk);
+  };
+
+  const catInfo=id=>INCOME_CATS.find(c=>c.id===id)||{label:id,icon:"💰",color:C.mu};
+
+  return (
+    <div>
+      {/* Month selector */}
+      <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4,marginBottom:12}}>
+        {allMonths.map(mk=>(
+          <button key={mk} onClick={()=>setViewMonth(mk)}
+            style={{flexShrink:0,padding:"6px 12px",borderRadius:8,fontSize:12,cursor:"pointer",border:`1px solid ${viewMonth===mk?C.ac:C.br}`,background:viewMonth===mk?C.ad:C.cd,color:viewMonth===mk?C.ac:C.mu,whiteSpace:"nowrap",fontWeight:viewMonth===mk?700:400}}>
+            {fmtMonthLabel(mk)}
+          </button>
+        ))}
+      </div>
+
+      {/* Totalkort — in, ut, kvar */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+        <div style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:14,padding:"14px 14px",boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
+          <div style={{fontSize:10,color:C.mu,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Inkomster</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#4a7c59"}}>{totalIn.toLocaleString("sv-SE")} kr</div>
+        </div>
+        <div style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:14,padding:"14px 14px",boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
+          <div style={{fontSize:10,color:C.mu,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Utgifter</div>
+          <div style={{fontSize:20,fontWeight:800,color:C.er}}>{Math.round(totalExpenses).toLocaleString("sv-SE")} kr</div>
+        </div>
+      </div>
+
+      {/* Disponibel inkomst */}
+      <div style={{background:disposable>=0?"linear-gradient(135deg,#e8f5ec,#f0f7ed)":"linear-gradient(135deg,#ffeaea,#fff5f5)",border:`1px solid ${disposable>=0?"#4a7c5933":"#ff6b6b44"}`,borderRadius:16,padding:"16px 18px",marginBottom:14,textAlign:"center"}}>
+        <div style={{fontSize:11,color:disposable>=0?C.ac:C.er,textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:4}}>
+          {disposable>=0?"✓ Disponibel inkomst":"⚠ Underskott denna månad"}
+        </div>
+        <div style={{fontSize:32,fontWeight:800,color:disposable>=0?C.ac:C.er}}>
+          {disposable>=0?"+":""}{Math.round(disposable).toLocaleString("sv-SE")} kr
+        </div>
+        {totalIn===0&&<div style={{fontSize:11,color:C.mu,marginTop:4}}>Lägg till inkomster nedan för att se disponibelt belopp</div>}
+      </div>
+
+      {/* Add button */}
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+        <button onClick={()=>setShowAdd(true)}
+          style={{background:C.ac,border:"none",borderRadius:10,padding:"10px 16px",color:"white",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+          + Ny inkomst
+        </button>
+      </div>
+
+      {/* Category breakdown */}
+      {Object.keys(catTotals).length>0&&(
+        <div style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:14,padding:"14px 16px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.04)"}}>
+          <div style={{fontSize:10,color:C.mu,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10,fontWeight:600}}>Per kategori</div>
+          {INCOME_CATS.filter(c=>catTotals[c.id]).map(cat=>(
+            <div key={cat.id} onClick={()=>setFilterCat(filterCat===cat.id?"all":cat.id)}
+              style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:`1px solid ${C.br}`,cursor:"pointer",opacity:filterCat!=="all"&&filterCat!==cat.id?0.5:1}}>
+              <span style={{fontSize:13,display:"flex",alignItems:"center",gap:8}}>
+                <span style={{width:28,height:28,borderRadius:8,background:cat.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{cat.icon}</span>
+                {cat.label}
+              </span>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:13,fontWeight:700,color:cat.color}}>{catTotals[cat.id].toLocaleString("sv-SE")} kr</div>
+                <div style={{fontSize:10,color:C.mu}}>{totalIn>0?((catTotals[cat.id]/totalIn)*100).toFixed(0):0}%</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Income list */}
+      {sorted.length===0?(
+        <div style={{textAlign:"center",padding:"28px 0",color:C.mu,fontSize:13}}>
+          {filterCat==="all"?"Inga inkomster registrerade denna månad":"Inga inkomster i denna kategori"}
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {sorted.map(p=>{
+            const ci=catInfo(p.cat);
+            return (
+              <div key={p.id} style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:10,padding:"11px 13px",display:"flex",alignItems:"center",gap:10,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+                <div style={{width:32,height:32,borderRadius:8,background:ci.color+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{ci.icon}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:600,color:C.tx,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.desc}</div>
+                  <div style={{fontSize:11,color:C.mu,marginTop:1}}>{ci.label} · {p.date}</div>
+                </div>
+                <div style={{fontWeight:700,color:ci.color,fontSize:14,flexShrink:0}}>+{Number(p.amount).toLocaleString("sv-SE")} kr</div>
+                <button onClick={()=>setDeleteId(p.id)}
+                  style={{background:"transparent",border:`1px solid ${C.br}`,borderRadius:6,width:26,height:26,cursor:"pointer",color:C.mu,fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add income sheet */}
+      {showAdd&&(
+        <div style={{position:"fixed",inset:0,background:"#0f0f13cc",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,padding:"0 16px 24px"}}
+          onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
+          <div style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:20,width:"100%",maxWidth:540,overflow:"hidden"}}>
+            <div style={{padding:"18px 20px 14px",borderBottom:`1px solid ${C.br}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:16,fontWeight:700,color:C.tx}}>Ny inkomst</span>
+              <button onClick={()=>setShowAdd(false)} style={{background:C.cd,border:`1px solid ${C.br}`,borderRadius:8,width:28,height:28,cursor:"pointer",color:C.mu,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+            <div style={{padding:"16px 20px 20px"}}>
+              <span style={{fontSize:11,color:C.mu,display:"block",marginBottom:6}}>Kategori</span>
+              <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:12}}>
+                {INCOME_CATS.map(c=>(
+                  <button key={c.id} onClick={()=>setForm({...form,cat:c.id})}
+                    style={{padding:"5px 10px",borderRadius:7,fontSize:12,cursor:"pointer",border:`1px solid ${form.cat===c.id?c.color:C.br}`,background:form.cat===c.id?c.color+"18":"transparent",color:form.cat===c.id?c.color:C.mu,fontWeight:form.cat===c.id?600:400}}>
+                    {c.icon} {c.label}
+                  </button>
+                ))}
+              </div>
+              <span style={{fontSize:11,color:C.mu,display:"block",marginBottom:5}}>Beskrivning</span>
+              <input style={S.inp} placeholder="ex. Lön november" value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})} />
+              <div style={{display:"flex",gap:8}}>
+                <div style={{flex:1}}>
+                  <span style={{fontSize:11,color:C.mu,display:"block",marginBottom:5}}>Belopp</span>
+                  <div style={S.inpRow}>
+                    <input style={{...S.inp,flex:1,marginBottom:0}} type="number" placeholder="0" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})} />
+                    <div style={S.pfx}>kr</div>
+                  </div>
+                </div>
+                <div style={{flex:1}}>
+                  <span style={{fontSize:11,color:C.mu,display:"block",marginBottom:5}}>Datum</span>
+                  <input style={{...S.inp,colorScheme:"light",marginBottom:0}} type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} />
+                </div>
+              </div>
+              <button onClick={addIncome} disabled={!form.desc||!form.amount}
+                style={{...S.btnP,marginTop:12,opacity:!form.desc||!form.amount?0.4:1}}>
+                Spara inkomst →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirm */}
+      {deleteId&&(
+        <div style={{position:"fixed",inset:0,background:"#0f0f13cc",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,padding:24}}>
+          <div style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:16,padding:24,maxWidth:320,width:"100%",textAlign:"center"}}>
+            <div style={{fontSize:16,fontWeight:700,color:C.tx,marginBottom:8}}>Ta bort inkomst?</div>
+            <div style={{fontSize:13,color:C.mu,marginBottom:20}}>Det här går inte att ångra.</div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setDeleteId(null)} style={{...S.btnB,flex:1}}>Avbryt</button>
+              <button onClick={()=>{setIncomes(incomes.filter(p=>p.id!==deleteId));setDeleteId(null);}}
+                style={{flex:1,background:C.er,border:"none",borderRadius:10,padding:"12px",color:"white",fontSize:14,fontWeight:600,cursor:"pointer"}}>Ta bort</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Dashboard({data,onEdit,purchases,setPurchases,incomes,setIncomes}) {
   const t=useMemo(()=>calcTotals(data),[data]);
   const cats=[
     {label:"Boende",total:t.housing,icon:"🏠",color:CATCOL.housing},
@@ -1388,7 +1582,7 @@ function Dashboard({data,onEdit,purchases,setPurchases}) {
       {/* Tab bar — sticky */}
       <div style={{position:"sticky",top:0,zIndex:10,background:C.bg,padding:"10px 16px 8px",borderBottom:`1px solid ${C.br}`}}>
         <div style={{display:"flex",gap:3,background:"#ede8df",border:`1px solid ${C.br}`,borderRadius:14,padding:4}}>
-          {[["overview","Översikt"],["chart","Diagram"],["calendar","Månadsplan"],["log","Köplog"]].map(([id,lbl])=>(
+          {[["overview","Översikt"],["income","Inkomster"],["chart","Diagram"],["calendar","Månadsplan"],["log","Köplog"]].map(([id,lbl])=>(
             <button key={id} style={{flex:1,padding:"10px 4px",border:"none",borderRadius:11,fontFamily:"inherit",fontSize:12,fontWeight:tab===id?700:500,cursor:"pointer",background:tab===id?C.ac:"transparent",color:tab===id?"white":C.mu,transition:"all 0.15s",boxShadow:tab===id?"0 2px 8px rgba(74,124,89,0.3)":"none"}} onClick={()=>setTab(id)}>{lbl}</button>
           ))}
         </div>
@@ -1397,7 +1591,8 @@ function Dashboard({data,onEdit,purchases,setPurchases}) {
       {/* Content */}
       <div style={{padding:"16px 16px 0"}}>
 
-      {tab==="overview"&&<OverviewTab t={t} purchases={purchases} budgets={budgets} onGoLog={()=>setTab("log")} data={data} />}
+      {tab==="overview"&&<OverviewTab t={t} purchases={purchases} budgets={budgets} onGoLog={()=>setTab("log")} data={data} totalIncome={incomes.filter(p=>p.monthKey===getCurrentMonthKey()).reduce((a,p)=>a+Number(p.amount),0)} />}
+      {tab==="income"&&<IncomeTab incomes={incomes} setIncomes={setIncomes} totalExpenses={t.total} />}
       {tab==="chart"&&<ChartSection t={t} data={data} />}
       {tab==="calendar"&&<MonthlyCalendar t={t} />}
       {tab==="log"&&<PurchaseLog purchases={purchases} setPurchases={setPurchases} budgets={budgets} />}
@@ -1421,19 +1616,22 @@ export default function App() {
   const [si,setSi]=useState(0);
   const [data,setData]=useState({});
   const [purchases,setPurchasesRaw]=useState([]);
+  const [incomes,setIncomesRaw]=useState([]);
   const [editMenu,setEditMenu]=useState(false);
   const [loaded,setLoaded]=useState(false);
   const [saveStatus,setSaveStatus]=useState(null);
   const PURCHASES_KEY="hushall-purchases-v1";
+  const INCOMES_KEY="hushall-incomes-v1";
 
-  // Load from localStorage on mount
   useEffect(()=>{
     try {
       const dr=localStorage.getItem(STORAGE_KEY);
       const sr=localStorage.getItem(STEP_KEY);
       const pr=localStorage.getItem(PURCHASES_KEY);
+      const ir=localStorage.getItem(INCOMES_KEY);
       if(dr) setData(JSON.parse(dr));
       if(pr) setPurchasesRaw(JSON.parse(pr));
+      if(ir) setIncomesRaw(JSON.parse(ir));
       if(sr) {
         const savedStep=parseInt(sr,10);
         if(savedStep>=ALL_STEPS.indexOf("dashboard")) setSi(ALL_STEPS.indexOf("dashboard"));
@@ -1458,6 +1656,16 @@ export default function App() {
     setSaveStatus("saving");
     try {
       localStorage.setItem(PURCHASES_KEY,JSON.stringify(newP));
+      setSaveStatus("saved");
+      setTimeout(()=>setSaveStatus(null),2000);
+    } catch(e) { setSaveStatus("error"); }
+  },[]);
+
+  const setIncomes=useCallback((newI)=>{
+    setIncomesRaw(newI);
+    setSaveStatus("saving");
+    try {
+      localStorage.setItem(INCOMES_KEY,JSON.stringify(newI));
       setSaveStatus("saved");
       setTimeout(()=>setSaveStatus(null),2000);
     } catch(e) { setSaveStatus("error"); }
@@ -1533,7 +1741,7 @@ export default function App() {
           )}
         </div>
       ):(
-        <Dashboard data={data} onEdit={()=>setEditMenu(true)} purchases={purchases} setPurchases={setPurchases} />
+        <Dashboard data={data} onEdit={()=>setEditMenu(true)} purchases={purchases} setPurchases={setPurchases} incomes={incomes} setIncomes={setIncomes} />
       )}
       {editMenu&&<EditMenu onSelect={id=>{setEditMenu(false);goTo(id);}} onClose={()=>setEditMenu(false)} />}
     </div>
