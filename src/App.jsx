@@ -1341,9 +1341,9 @@ const INCOME_CATS = [
   {id:"ovrigt",     label:"Övrigt",           icon:"💰", color:"#8a7f6e"},
 ];
 
-function IncomeTab({incomes,setIncomes,totalExpenses}) {
+function IncomeTab({incomes,setIncomes,t}) {
   const [showAdd,setShowAdd]=useState(false);
-  const [form,setForm]=useState({desc:"",amount:"",cat:"lon",date:new Date().toISOString().slice(0,10),period:"month",month:1});
+  const [form,setForm]=useState({desc:"",amount:"",cat:"lon",date:new Date().toISOString().slice(0,10)});
   const [deleteId,setDeleteId]=useState(null);
   const [filterCat,setFilterCat]=useState("all");
 
@@ -1352,6 +1352,12 @@ function IncomeTab({incomes,setIncomes,totalExpenses}) {
   if(!allMonths.includes(monthKey)) allMonths.unshift(monthKey);
   const [viewMonth,setViewMonth]=useState(monthKey);
 
+  // Parse month number from key (e.g. "2026-06" → 6)
+  const viewMonthNum=parseInt(viewMonth.split("-")[1],10);
+
+  // Actual expenses for this specific month — monthly recurring + annual costs that fall this month
+  const actualExpenses=monthTotal(t.allItems,viewMonthNum);
+
   const monthIncomes=incomes.filter(p=>p.monthKey===viewMonth);
   const filtered=filterCat==="all"?monthIncomes:monthIncomes.filter(p=>p.cat===filterCat);
   const sorted=[...filtered].sort((a,b)=>new Date(b.date)-new Date(a.date));
@@ -1359,7 +1365,7 @@ function IncomeTab({incomes,setIncomes,totalExpenses}) {
   const catTotals={};
   monthIncomes.forEach(p=>{catTotals[p.cat]=(catTotals[p.cat]||0)+Number(p.amount);});
   const totalIn=Object.values(catTotals).reduce((a,b)=>a+b,0);
-  const disposable=totalIn-totalExpenses;
+  const disposable=totalIn-actualExpenses;
   const isCurrentMonth=viewMonth===monthKey;
 
   const addIncome=()=>{
@@ -1392,20 +1398,23 @@ function IncomeTab({incomes,setIncomes,totalExpenses}) {
           <div style={{fontSize:20,fontWeight:800,color:"#4a7c59"}}>{totalIn.toLocaleString("sv-SE")} kr</div>
         </div>
         <div style={{background:"#fff",border:`1px solid ${C.br}`,borderRadius:14,padding:"14px 14px",boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
-          <div style={{fontSize:10,color:C.mu,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Utgifter</div>
-          <div style={{fontSize:20,fontWeight:800,color:C.er}}>{Math.round(totalExpenses).toLocaleString("sv-SE")} kr</div>
+          <div style={{fontSize:10,color:C.mu,textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Utgifter</div>
+          <div style={{fontSize:20,fontWeight:800,color:C.er}}>{Math.round(actualExpenses).toLocaleString("sv-SE")} kr</div>
+          <div style={{fontSize:9,color:C.mu,marginTop:2}}>faktiska {MONTHS[viewMonthNum-1].toLowerCase()}</div>
         </div>
       </div>
 
       {/* Disponibel inkomst */}
       <div style={{background:disposable>=0?"linear-gradient(135deg,#e8f5ec,#f0f7ed)":"linear-gradient(135deg,#ffeaea,#fff5f5)",border:`1px solid ${disposable>=0?"#4a7c5933":"#ff6b6b44"}`,borderRadius:16,padding:"16px 18px",marginBottom:14,textAlign:"center"}}>
         <div style={{fontSize:11,color:disposable>=0?C.ac:C.er,textTransform:"uppercase",letterSpacing:1.5,fontWeight:700,marginBottom:4}}>
-          {disposable>=0?"✓ Disponibel inkomst":"⚠ Underskott denna månad"}
+          {disposable>=0?"✓ Kvar efter utgifter":"⚠ Underskott"}
         </div>
         <div style={{fontSize:32,fontWeight:800,color:disposable>=0?C.ac:C.er}}>
           {disposable>=0?"+":""}{Math.round(disposable).toLocaleString("sv-SE")} kr
         </div>
-        {totalIn===0&&<div style={{fontSize:11,color:C.mu,marginTop:4}}>Lägg till inkomster nedan för att se disponibelt belopp</div>}
+        <div style={{fontSize:11,color:C.mu,marginTop:4}}>
+          {totalIn===0?"Lägg till inkomster nedan":`${totalIn.toLocaleString("sv-SE")} kr in · ${Math.round(actualExpenses).toLocaleString("sv-SE")} kr ut i ${MONTHS[viewMonthNum-1].toLowerCase()}`}
+        </div>
       </div>
 
       {/* Add button */}
@@ -1592,7 +1601,7 @@ function Dashboard({data,onEdit,purchases,setPurchases,incomes,setIncomes}) {
       <div style={{padding:"16px 16px 0"}}>
 
       {tab==="overview"&&<OverviewTab t={t} purchases={purchases} budgets={budgets} onGoLog={()=>setTab("log")} data={data} totalIncome={incomes.filter(p=>p.monthKey===getCurrentMonthKey()).reduce((a,p)=>a+Number(p.amount),0)} />}
-      {tab==="income"&&<IncomeTab incomes={incomes} setIncomes={setIncomes} totalExpenses={t.total} />}
+      {tab==="income"&&<IncomeTab incomes={incomes} setIncomes={setIncomes} t={t} />}
       {tab==="chart"&&<ChartSection t={t} data={data} />}
       {tab==="calendar"&&<MonthlyCalendar t={t} />}
       {tab==="log"&&<PurchaseLog purchases={purchases} setPurchases={setPurchases} budgets={budgets} />}
